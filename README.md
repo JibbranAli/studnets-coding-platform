@@ -1,145 +1,86 @@
 # 🐍 Student Code Debugging Platform
 
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)]()
-[![Docker](https://img.shields.io/badge/docker-supported-blue.svg)](docker-compose.yml)
-
-A production-ready platform for students to practice Python debugging with secure code execution, real-time feedback, and comprehensive monitoring. Built for educational institutions to support 400+ concurrent users.
-
-## 📚 Documentation
-
-- **[Quick Start Guide](QUICK_START.md)** - Get running in 5 minutes
-- **[User Guide](USER_GUIDE.md)** - Complete guide for students and admins
-- **[Deployment Guide](DEPLOYMENT.md)** - AWS EC2 production deployment
-- **[GitHub Setup](GITHUB_SETUP.md)** - Push to GitHub instructions
-- **[Production Checklist](PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+A production-ready platform for students to practice Python debugging with secure code execution and real-time feedback. Built for educational institutions supporting 400+ concurrent users.
 
 ## ✨ Features
 
-- 🔐 **Secure Authentication** - Bcrypt password hashing, session management, rate limiting
-- 🛡️ **Sandboxed Code Execution** - RestrictedPython for safe code execution
-- 📊 **Admin Dashboard** - Test creation, student management, results tracking
-- 📈 **Production Monitoring** - Health checks, metrics, logging
-- 🚀 **Scalable Architecture** - Docker support, PostgreSQL, Nginx reverse proxy
-- 📝 **Excel Integration** - Automated report generation and sync
-- ⚡ **Rate Limiting** - Protection against abuse and DoS attacks
-- 📋 **Audit Logging** - Security event tracking
+- 🔐 **Secure Authentication** - Bcrypt password hashing, session management
+- 🛡️ **Safe Code Execution** - Sandboxed Python environment with RestrictedPython
+- 👨‍💼 **Admin Dashboard** - Create tests, assign to students, view results
+- 🎓 **Student Portal** - Complete assigned tests, practice coding
+- 📊 **Excel Reports** - Export results and student data
+- ⚡ **Rate Limiting** - Protection against abuse
+- 📝 **Audit Logging** - Track all security events
+- 📈 **Monitoring** - Health checks and metrics
 
-## 🚀 Quick Start
+## 🚀 Quick Install
 
-### Amazon Linux (AWS EC2)
+### One Command Installation
+
 ```bash
-git clone https://github.com/YOUR_USERNAME/student-debug-platform.git
-cd student-debug-platform
-chmod +x setup-amazon-linux.sh
-./setup-amazon-linux.sh
+git clone https://github.com/JibbranAli/studnets-coding-platform.git
+cd studnets-coding-platform
+chmod +x install.sh
+./install.sh
 ```
 
-### Ubuntu/Debian
+That's it! The script will:
+- ✅ Install all dependencies
+- ✅ Setup Python environment
+- ✅ Configure database (SQLite)
+- ✅ Create admin account
+- ✅ Setup auto-start service
+- ✅ Configure firewall
+
+### Access Your Platform
+
+**URL:** `http://YOUR_SERVER_IP:8501`
+
+**Admin Login:**
+- Username: (as configured during install)
+- Password: (as configured during install)
+
+## 📋 Requirements
+
+- Linux (Ubuntu, Debian, Amazon Linux, CentOS, RHEL)
+- Python 3.7+
+- 2GB RAM minimum
+- 10GB disk space
+
+## 🎯 Usage
+
+### For Administrators
+
+1. **Login** - Use admin credentials
+2. **Create Tests** - Write buggy Python code for students to fix
+3. **Assign Tests** - Select students and assign tests
+4. **View Results** - Monitor submissions and scores
+5. **Export Reports** - Download Excel reports
+
+### For Students
+
+1. **Register** - Create account with email
+2. **Login** - Access student dashboard
+3. **View Tests** - See assigned debugging challenges
+4. **Fix Code** - Debug and fix the buggy code
+5. **Submit** - Get instant feedback and scores
+
+## 🔧 Management
+
+### Start/Stop Service
+
 ```bash
-git clone https://github.com/YOUR_USERNAME/student-debug-platform.git
-cd student-debug-platform
-chmod +x setup.sh
-./setup.sh
-```
+# Start
+sudo systemctl start student-platform
 
-### Windows
-```bash
-git clone https://github.com/YOUR_USERNAME/student-debug-platform.git
-cd student-debug-platform
-setup.bat
-```
+# Stop
+sudo systemctl stop student-platform
 
-### Docker (All Platforms)
-```bash
-git clone https://github.com/YOUR_USERNAME/student-debug-platform.git
-cd student-debug-platform
-cp .env.example .env
-# Edit .env with your settings
-docker-compose up -d
-```
-
-**Access:** http://localhost:8501 (or your server IP)  
-**Default Admin:** Username from .env / Password from .env
-
-📖 **Detailed instructions:** [QUICK_START.md](QUICK_START.md)
-
-## Production Deployment
-
-### Using Docker Compose (Recommended)
-
-```bash
-# Configure production settings
-export PRODUCTION=true
-export SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-export DB_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(16))")
-
-# Deploy
-chmod +x deploy.sh
-./deploy.sh
-```
-
-### Using Systemd
-
-```bash
-# Run setup
-./setup.sh
-
-# Deploy with systemd
-./deploy.sh
-# Select option 2
-
-# Manage service
-sudo systemctl status student-platform
+# Restart
 sudo systemctl restart student-platform
-sudo journalctl -u student-platform -f
-```
 
-### AWS EC2 Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed AWS deployment guide.
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | Database connection string | `sqlite:///./student_platform.db` |
-| `SECRET_KEY` | Application secret key | Required in production |
-| `ADMIN_USERNAME` | Admin username | `admin` |
-| `ADMIN_PASSWORD` | Admin password | Required in production |
-| `SESSION_TIMEOUT` | Session timeout (seconds) | `3600` |
-| `MAX_LOGIN_ATTEMPTS` | Max failed login attempts | `5` |
-| `CODE_EXECUTION_TIMEOUT` | Code execution timeout (seconds) | `5` |
-| `RATE_LIMIT_ENABLED` | Enable rate limiting | `true` |
-| `PRODUCTION` | Production mode flag | `false` |
-| `LOG_LEVEL` | Logging level | `INFO` |
-
-### Security Configuration
-
-```bash
-# Generate secure keys
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# Set in .env
-SECRET_KEY=<generated-key>
-ADMIN_PASSWORD=<strong-password>
-PRODUCTION=true
-DEBUG=false
-```
-
-## Monitoring & Maintenance
-
-### Health Check
-
-```bash
-# Manual health check
-python3 healthcheck.py
-
-# Docker health check
-docker-compose ps
+# Status
+sudo systemctl status student-platform
 ```
 
 ### View Logs
@@ -148,166 +89,200 @@ docker-compose ps
 # Application logs
 tail -f logs/app.log
 
+# Service logs
+sudo journalctl -u student-platform -f
+
 # Audit logs
 tail -f logs/audit.log
-
-# Docker logs
-docker-compose logs -f app
 ```
 
-### Backup
+### Manual Start
 
 ```bash
-# Create backup
-chmod +x backup.sh
-./backup.sh
-
-# Backups stored in: backups/
+source venv/bin/activate
+streamlit run app.py
 ```
 
-### Metrics
+## 🔒 Security Features
 
-Access metrics via the monitoring module:
-```python
-from monitoring import metrics
-print(metrics.get_metrics())
-```
+- **Password Hashing** - Bcrypt encryption
+- **Session Management** - Automatic timeout
+- **Rate Limiting** - Prevent abuse
+- **Code Sandboxing** - RestrictedPython
+- **Input Validation** - Sanitized inputs
+- **Audit Logging** - Track all actions
+- **Failed Login Protection** - Account lockout
 
-## Security Features
+## 📊 Configuration
 
-### Code Execution Security
-- RestrictedPython sandboxing
-- Dangerous operation detection
-- Execution timeout limits
-- Output size limits
-- Memory protection
+Edit `.env` file to customize:
 
-### Authentication Security
-- Bcrypt password hashing
-- Session timeout
-- Failed login attempt tracking
-- Account lockout mechanism
-- Rate limiting
-
-### Network Security
-- Nginx reverse proxy
-- Rate limiting
-- Request size limits
-- Security headers
-- HTTPS support (configure SSL)
-
-## Performance Optimization
-
-### For 400+ Concurrent Users
-
-1. **Database Optimization:**
 ```bash
-# Use PostgreSQL with connection pooling
-DATABASE_URL=postgresql://user:pass@localhost/db?pool_size=20&max_overflow=40
-```
+# Database
+DATABASE_URL=sqlite:///./student_platform.db
 
-2. **Resource Limits:**
-```bash
-# Adjust in .env
-CODE_EXECUTION_TIMEOUT=3
-MAX_CODE_LENGTH=5000
-MAX_OUTPUT_LENGTH=2000
-```
+# Admin
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your_secure_password
 
-3. **Rate Limiting:**
-```bash
+# Security
+SECRET_KEY=auto_generated
+SESSION_TIMEOUT=3600
+MAX_LOGIN_ATTEMPTS=5
+
+# Rate Limiting
+RATE_LIMIT_ENABLED=true
 MAX_REQUESTS_PER_MINUTE=60
 MAX_CODE_RUNS_PER_MINUTE=10
+
+# Logging
+LOG_LEVEL=INFO
 ```
 
-4. **Scaling:**
+## 🌐 AWS Deployment
+
+### EC2 Setup
+
+1. Launch EC2 instance (t2.medium or larger)
+2. Configure Security Group:
+   - Allow port 8501 (application)
+   - Allow port 22 (SSH)
+3. SSH into instance
+4. Run installation script
+
 ```bash
-# Use Docker Compose scaling
-docker-compose up -d --scale app=3
+ssh -i your-key.pem ec2-user@your-ec2-ip
+git clone https://github.com/JibbranAli/studnets-coding-platform.git
+cd studnets-coding-platform
+chmod +x install.sh
+./install.sh
 ```
 
-## Troubleshooting
+### Security Group Rules
 
-### Database Connection Issues
+| Type | Port | Source |
+|------|------|--------|
+| SSH | 22 | Your IP |
+| Custom TCP | 8501 | 0.0.0.0/0 |
+
+## 📖 Documentation
+
+- **[USER_GUIDE.md](USER_GUIDE.md)** - Complete guide for students and admins
+- **[QUICK_START.md](QUICK_START.md)** - Get started in 5 minutes
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Detailed deployment guide
+- **[PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+
+## 🛠️ Troubleshooting
+
+### Application won't start
+
 ```bash
-# Check database status
-sudo systemctl status postgresql
+# Check logs
+sudo journalctl -u student-platform -xe
 
-# Test connection
-psql -U student_user -d student_debug_platform
-```
-
-### High Memory Usage
-```bash
-# Check system resources
-python3 healthcheck.py
+# Check if port is in use
+sudo lsof -i :8501
 
 # Restart service
 sudo systemctl restart student-platform
 ```
 
-### Code Execution Errors
-```bash
-# Check logs
-tail -f logs/app.log | grep "code_execution"
+### Database errors
 
-# Verify RestrictedPython
-python3 -c "from RestrictedPython import compile_restricted; print('OK')"
+```bash
+# Reinitialize database
+source venv/bin/activate
+python3 -c "from database import init_db; init_db()"
 ```
 
-## API Documentation
+### Permission errors
 
-### Admin Functions
-- `create_test()` - Create debugging test
-- `assign_test()` - Assign test to students
-- `view_results()` - View submission results
-- `export_excel()` - Export results to Excel
-
-### Student Functions
-- `submit_code()` - Submit code solution
-- `run_code()` - Test code execution
-- `view_assignments()` - View assigned tests
-
-## Development
-
-### Setup Development Environment
 ```bash
-# Install dependencies
+# Fix permissions
+chmod 755 data logs backups
+chown -R $USER:$USER .
+```
+
+## 🔄 Updates
+
+```bash
+# Pull latest changes
+git pull origin main
+
+# Reinstall dependencies
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Run in debug mode
-DEBUG=true streamlit run app.py
+# Restart service
+sudo systemctl restart student-platform
 ```
 
-### Run Tests
-```bash
-# Unit tests
-python3 -m pytest tests/
+## 📦 Project Structure
 
-# Code quality
-flake8 .
-black .
+```
+studnets-coding-platform/
+├── app.py                 # Main application
+├── auth.py                # Authentication
+├── code_runner.py         # Code execution engine
+├── database.py            # Database models
+├── excel_sync.py          # Excel export
+├── config.py              # Configuration
+├── logger.py              # Logging system
+├── monitoring.py          # Health checks
+├── security.py            # Security features
+├── rate_limiter.py        # Rate limiting
+├── healthcheck.py         # Health endpoint
+├── install.sh             # Installation script
+├── requirements.txt       # Python dependencies
+├── .env.example           # Environment template
+└── README.md              # This file
 ```
 
-## License
+## 🤝 Contributing
 
-MIT License - See LICENSE file
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
 
-## Support
+## 📄 License
 
-For issues and questions:
-- GitHub Issues: <repository-url>/issues
-- Documentation: [DEPLOYMENT.md](DEPLOYMENT.md)
-- Email: support@example.com
+MIT License - See LICENSE file for details
 
-## Changelog
+## 💬 Support
 
-### v1.0.0 (Production Ready)
-- ✅ Secure authentication system
-- ✅ Sandboxed code execution
-- ✅ Production monitoring
-- ✅ Docker support
+- **Issues:** [GitHub Issues](https://github.com/JibbranAli/studnets-coding-platform/issues)
+- **Documentation:** Check the docs folder
+- **Logs:** `tail -f logs/app.log`
+
+## 🎓 Use Cases
+
+- **Universities** - Programming courses and assignments
+- **Coding Bootcamps** - Practice debugging skills
+- **Online Education** - Remote learning platforms
+- **Corporate Training** - Employee skill development
+
+## 📈 Performance
+
+- Supports 400+ concurrent users
+- SQLite for simplicity (PostgreSQL supported)
+- Efficient code execution with timeouts
+- Rate limiting prevents overload
+- Automatic session cleanup
+
+## 🔐 Production Ready
+
+- ✅ Security hardening
+- ✅ Error handling
+- ✅ Logging and monitoring
+- ✅ Auto-restart on failure
 - ✅ Rate limiting
-- ✅ Audit logging
-- ✅ Health checks
-- ✅ Automated backups
+- ✅ Input validation
+- ✅ Session management
+
+---
+
+**Made with ❤️ for education**
+
+**Repository:** https://github.com/JibbranAli/studnets-coding-platform
