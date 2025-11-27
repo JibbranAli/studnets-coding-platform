@@ -23,7 +23,7 @@ NC='\033[0m'
 
 print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_info() { echo -e "${BLUE}➜ $1${NC}"; }
-print_error() { echo -e "${RED}✗ $1${NC}"; echo "Check logs/install.log for details"; exit 1; }
+print_error() { echo -e "${RED}✗ $1${NC}"; echo "Error: $2"; exit 1; }
 
 # Create log file
 mkdir -p logs
@@ -43,35 +43,37 @@ print_info "Detected OS: $OS"
 echo ""
 
 # ============================================
-# STEP 1: Install System Dependencies
+# STEP 1: Check Python Installation
 # ============================================
-print_info "Installing system dependencies..."
+print_info "Checking Python installation..."
 
-if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
-    export DEBIAN_FRONTEND=noninteractive
-    sudo apt-get update -qq
-    sudo apt-get install -y python3 python3-pip python3-venv gcc python3-dev curl
-elif [ "$OS" = "amzn" ]; then
-    sudo yum install -y python3 python3-pip gcc python3-devel curl -y
-elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
-    sudo yum install -y python3 python3-pip gcc python3-devel curl -y
+if command -v python3 > /dev/null 2>&1; then
+    PYTHON_VERSION=$(python3 --version)
+    print_success "Python found: $PYTHON_VERSION"
+    PYTHON_CMD="python3"
 else
-    print_error "Unsupported OS: $OS"
+    print_error "Python 3 not found" "Please install Python 3 manually"
 fi
 
-print_success "System dependencies installed"
+# Check pip
+if ! command -v pip3 > /dev/null 2>&1; then
+    print_info "Installing pip..."
+    curl -sS https://bootstrap.pypa.io/get-pip.py | $PYTHON_CMD
+fi
+
+print_success "Python environment ready"
 
 # ============================================
-# STEP 2: Setup Python Environment
+# STEP 2: Setup Python Virtual Environment
 # ============================================
-print_info "Setting up Python environment..."
+print_info "Setting up Python virtual environment..."
 
-python3 -m venv venv
+$PYTHON_CMD -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-print_success "Python environment ready"
+print_success "Virtual environment ready"
 
 # ============================================
 # STEP 3: Auto-Configure Application
@@ -80,8 +82,8 @@ print_info "Configuring application..."
 
 # Generate secure credentials
 ADMIN_USER="admin"
-ADMIN_PASS=$(python3 -c "import secrets; print(secrets.token_urlsafe(12))")
-SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+ADMIN_PASS=$($PYTHON_CMD -c "import secrets; print(secrets.token_urlsafe(12))")
+SECRET_KEY=$($PYTHON_CMD -c "import secrets; print(secrets.token_urlsafe(32))")
 
 # Create .env file
 cat > .env << EOF
@@ -141,7 +143,7 @@ print_info "Initializing database..."
 mkdir -p data logs backups
 chmod 755 data logs backups
 
-python3 -c "from database import init_db; init_db()"
+$PYTHON_CMD -c "from database import init_db; init_db()"
 
 print_success "Database initialized"
 
@@ -203,7 +205,12 @@ sleep 5
 if sudo systemctl is-active --quiet student-platform.service; then
     print_success "Application started successfully"
 else
-    print_error "Failed to start application. Check: sudo journalctl -u student-platform -xe"
+    print_info "Checking service status..."
+    sudo systemctl status student-platform.service --no-pager || true
+    echo ""
+    echo "If service failed, check logs:"
+    echo "  sudo journalctl -u student-platform -xe"
+    echo "  tail -f logs/service.log"
 fi
 
 # ============================================
@@ -266,6 +273,15 @@ Admin Username: $ADMIN_USER
 Admin Password: $ADMIN_PASS
 
 Installation Date: $(date)
+
+Service Commands:
+  sudo systemctl status student-platform
+  sudo systemctl restart student-platform
+  sudo journalctl -u student-platform -f
+
+Logs:
+  tail -f logs/app.log
+  tail -f logs/service.log
 EOF
 
 echo -e "${GREEN}Credentials saved to: CREDENTIALS.txt${NC}"
