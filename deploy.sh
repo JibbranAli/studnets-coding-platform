@@ -1,107 +1,168 @@
 #!/bin/bash
 
-# Student Code Debugging Platform - Deployment Script for AWS EC2
-# This script automates the deployment process
-
+# Production Deployment Script
 set -e
 
 echo "=========================================="
-echo "Student Code Debugging Platform Deployment"
+echo "Production Deployment"
 echo "=========================================="
+echo ""
 
-# Update system
-echo "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-# Install Python 3.10+
-echo "Installing Python..."
-sudo apt install -y python3 python3-pip python3-venv
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
 
-# Install PostgreSQL (optional, comment out if using SQLite)
-echo "Installing PostgreSQL..."
-sudo apt install -y postgresql postgresql-contrib
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
+print_error() {
+    echo -e "${RED}✗ $1${NC}"
+}
 
-# Create PostgreSQL database and user
-echo "Setting up PostgreSQL database..."
-sudo -u postgres psql -c "CREATE DATABASE student_debug_platform;"
-sudo -u postgres psql -c "CREATE USER platformuser WITH PASSWORD 'secure_password_here';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE student_debug_platform TO platformuser;"
+print_info() {
+    echo -e "${YELLOW}ℹ $1${NC}"
+}
 
-# Install Nginx
-echo "Installing Nginx..."
-sudo apt install -y nginx
+# Check if .env exists
+if [ ! -f .env ]; then
+    print_error ".env file not found"
+    echo "Please create .env file from .env.example"
+    exit 1
+fi
 
-# Create application directory
-APP_DIR="/home/ubuntu/student-platform"
-echo "Creating application directory at $APP_DIR..."
-mkdir -p $APP_DIR
-cd $APP_DIR
+# Load environment
+source .env
 
-# Create virtual environment
-echo "Creating Python virtual environment..."
-python3 -m venv venv
-source venv/bin/activate
+# Validate production settings
+print_info "Validating production configuration..."
+python3 -c "from config import config; config.validate()" || {
+    print_error "Configuration validation failed"
+    exit 1
+}
+print_success "Configuration validated"
+echo ""
 
-# Install Python dependencies
-echo "Installing Python packages..."
-pip install --upgrade pip
-pip install -r requirements.txt
+# Backup database
+print_info "Creating database backup..."
+if [ -f "student_platform.db" ]; then
+    BACKUP_FILE="backups/student_platform_$(date +%Y%m%d_%H%M%S).db"
+    mkdir -p backups
+    cp student_platform.db "$BACKUP_FILE"
+    print_success "Database backed up to $BACKUP_FILE"
+elif [ ! -z "$DATABASE_URL" ] && [[ $DATABASE_URL == postgresql* ]]; then
+    BACKUP_FILE="backups/database_$(date +%Y%m%d_%H%M%S).sql"
+    mkdir -p backups
+    pg_dump "$DATABASE_URL" > "$BACKUP_FILE" 2>/dev/null || print_info "Database backup skipped"
+    print_success "Database backed up to $BACKUP_FILE"
+fi
+echo ""
 
-# Create data directory
-echo "Creating data directory..."
-mkdir -p /home/ubuntu/student-platform/data
+# Run database migrations
+print_info "Running database migrations..."
+python3 -c "from database import init_db; init_db()"
+print_success "Database migrations completed"
+echo ""
 
-# Setup environment variables
-echo "Setting up environment variables..."
-cat > .env << EOF
-DATABASE_URL=postgresql://platformuser:secure_password_here@localhost:5432/student_debug_platform
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=$(openssl rand -base64 32)
-SECRET_KEY=$(openssl rand -base64 32)
-EXCEL_FILE_PATH=/home/ubuntu/student-platform/data/student_results.xlsx
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_ADDRESS=0.0.0.0
+# Create required directories
+print_info "Creating required directories..."
+mkdir -p logs data backups
+chmod 755 logs data backups
+print_success "Directories created"
+echo ""
+
+# Run health check
+print_info "Running health check..."
+python3 healthcheck.py || {
+    print_error "Health check failed"
+    exit 1
+}
+print_success "Health check passed"
+echo ""
+
+# Deployment method selection
+echo "Select deployment method:"
+echo "1. Docker Compose (recommended)"
+echo "2. Systemd Service"
+echo "3. Manual"
+read -p "Enter choice (1-3): " deploy_choice
+
+case $deploy_choice in
+    1)
+        print_info "Deploying with Docker Compose..."
+        
+        # Check if Docker is installed
+        if ! command -v docker &> /dev/null; then
+            print_error "Docker is not installed"
+            exit 1
+        fi
+        
+        # Build and start containers
+        docker-compose down
+        docker-compose build --no-cache
+        docker-compose up -d
+        
+        print_success "Application deployed with Docker Compose"
+        echo ""
+        echo "Access the application at: http://localhost:8501"
+        echo "View logs: docker-compose logs -f app"
+        echo "Stop: docker-compose down"
+        ;;
+        
+    2)
+        print_info "Deploying with Systemd..."
+        
+        # Create systemd service
+        CURRENT_USER=$(whoami)
+        CURRENT_PATH=$(pwd)
+        
+        sudo tee /etc/systemd/system/student-platform.service > /dev/null <<EOF
+[Unit]
+Description=Student Code Debugging Platform
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=$CURRENT_USER
+WorkingDirectory=$CURRENT_PATH
+Environment="PATH=$CURRENT_PATH/venv/bin"
+ExecStart=$CURRENT_PATH/venv/bin/streamlit run $CURRENT_PATH/app.py --server.port=8501 --server.address=0.0.0.0
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 EOF
+        
+        sudo systemctl daemon-reload
+        sudo systemctl enable student-platform.service
+        sudo systemctl restart student-platform.service
+        
+        print_success "Application deployed with Systemd"
+        echo ""
+        echo "Service status: sudo systemctl status student-platform"
+        echo "View logs: sudo journalctl -u student-platform -f"
+        echo "Stop: sudo systemctl stop student-platform"
+        ;;
+        
+    3)
+        print_info "Manual deployment selected"
+        echo ""
+        echo "To start the application manually:"
+        echo "  source venv/bin/activate"
+        echo "  streamlit run app.py"
+        ;;
+        
+    *)
+        print_error "Invalid choice"
+        exit 1
+        ;;
+esac
 
-echo "Generated secure admin password. Check .env file for credentials."
-
-# Initialize database
-echo "Initializing database..."
-python database.py
-
-# Setup systemd service
-echo "Setting up systemd service..."
-sudo cp streamlit_service.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable streamlit_service
-sudo systemctl start streamlit_service
-
-# Configure Nginx
-echo "Configuring Nginx..."
-sudo cp nginx.conf /etc/nginx/sites-available/student-platform
-sudo ln -sf /etc/nginx/sites-available/student-platform /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-
-# Configure firewall
-echo "Configuring firewall..."
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 8501/tcp
-sudo ufw --force enable
-
-echo "=========================================="
-echo "Deployment completed successfully!"
-echo "=========================================="
 echo ""
-echo "Next steps:"
-echo "1. Check .env file for admin credentials"
-echo "2. Access the application at http://YOUR_EC2_IP"
-echo "3. Setup SSL certificate using certbot (see DEPLOYMENT.md)"
-echo "4. Update AWS Security Group to allow ports 80, 443, 8501"
+print_success "Deployment completed successfully!"
 echo ""
-echo "Service status:"
-sudo systemctl status streamlit_service --no-pager
+echo "Important: Monitor logs for any issues"
+echo "Health check: python3 healthcheck.py"

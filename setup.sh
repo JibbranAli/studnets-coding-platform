@@ -52,11 +52,11 @@ print_info "Step 1: Updating system packages..."
 if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
     sudo apt update && sudo apt upgrade -y
     print_success "System packages updated"
-elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
+elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "amzn" ]; then
     sudo yum update -y
     print_success "System packages updated"
 else
-    print_error "Unsupported OS"
+    print_error "Unsupported OS: $OS"
     exit 1
 fi
 echo ""
@@ -67,6 +67,9 @@ if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
     sudo apt install -y python3.11 python3.11-venv python3-pip
 elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
     sudo yum install -y python3.11 python3.11-pip
+elif [ "$OS" = "amzn" ]; then
+    # Amazon Linux 2023 or AL2
+    sudo yum install -y python3.11 python3.11-pip python3.11-devel
 fi
 
 # Verify Python installation
@@ -88,6 +91,10 @@ if [ "$install_postgres" = "y" ]; then
     elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
         sudo yum install -y postgresql-server postgresql-contrib
         sudo postgresql-setup initdb
+    elif [ "$OS" = "amzn" ]; then
+        # Amazon Linux
+        sudo yum install -y postgresql15-server postgresql15-contrib
+        sudo postgresql-setup --initdb
     fi
     
     sudo systemctl start postgresql
@@ -210,7 +217,7 @@ read -p "Do you want to install Nginx as reverse proxy? (y/n): " install_nginx
 if [ "$install_nginx" = "y" ]; then
     if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
         sudo apt install -y nginx
-    elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
+    elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ] || [ "$OS" = "amzn" ]; then
         sudo yum install -y nginx
     fi
     
