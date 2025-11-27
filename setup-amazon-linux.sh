@@ -36,10 +36,25 @@ print_info "Step 3: PostgreSQL installation..."
 read -p "Install PostgreSQL? (y/n, default: n): " install_pg
 if [ "$install_pg" = "y" ]; then
     sudo yum install -y postgresql15-server postgresql15-contrib postgresql15-devel
-    sudo postgresql-setup --initdb
-    sudo systemctl start postgresql
+    
+    # Initialize only if not already initialized
+    if [ ! -f /var/lib/pgsql/data/PG_VERSION ]; then
+        sudo postgresql-setup --initdb
+    else
+        print_info "PostgreSQL already initialized"
+    fi
+    
+    # Ensure PostgreSQL is running
+    sudo systemctl start postgresql 2>/dev/null || true
     sudo systemctl enable postgresql
-    print_success "PostgreSQL installed"
+    
+    # Check if running
+    if sudo systemctl is-active --quiet postgresql; then
+        print_success "PostgreSQL is running"
+    else
+        print_info "Starting PostgreSQL..."
+        sudo systemctl restart postgresql
+    fi
 else
     print_info "Skipping PostgreSQL (will use SQLite)"
 fi
