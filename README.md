@@ -1,21 +1,14 @@
 # 🐍 Student Code Debugging Platform
 
-A production-ready platform for students to practice Python debugging with secure code execution and real-time feedback. Built for educational institutions supporting 400+ concurrent users.
+Production-ready platform for students to practice Python debugging with secure code execution. Supports 400+ concurrent users.
 
-## ✨ Features
+## ⚡ One-Command Installation
 
-- 🔐 **Secure Authentication** - Bcrypt password hashing, session management
-- 🛡️ **Safe Code Execution** - Sandboxed Python environment with RestrictedPython
-- 👨‍💼 **Admin Dashboard** - Create tests, assign to students, view results
-- 🎓 **Student Portal** - Complete assigned tests, practice coding
-- 📊 **Excel Reports** - Export results and student data
-- ⚡ **Rate Limiting** - Protection against abuse
-- 📝 **Audit Logging** - Track all security events
-- 📈 **Monitoring** - Health checks and metrics
+```bash
+curl -sSL https://raw.githubusercontent.com/JibbranAli/studnets-coding-platform/main/install.sh | bash
+```
 
-## 🚀 Quick Install
-
-### One Command Installation
+Or clone and install:
 
 ```bash
 git clone https://github.com/JibbranAli/studnets-coding-platform.git
@@ -24,119 +17,98 @@ chmod +x install.sh
 ./install.sh
 ```
 
-That's it! The script will:
-- ✅ Install all dependencies
-- ✅ Setup Python environment
-- ✅ Configure database (SQLite)
-- ✅ Create admin account
-- ✅ Setup auto-start service
-- ✅ Configure firewall
+**That's it!** The script automatically:
+- ✅ Detects your OS (Ubuntu, Debian, Amazon Linux, CentOS, RHEL)
+- ✅ Installs all dependencies
+- ✅ Sets up Python environment
+- ✅ Configures database (SQLite)
+- ✅ Generates secure admin credentials
+- ✅ Creates auto-start service
+- ✅ Configures firewall
+- ✅ Starts the application
+- ✅ Shows you the dashboard URL
 
-### Access Your Platform
+## 🎯 Features
 
-**URL:** `http://YOUR_SERVER_IP:8501`
-
-**Admin Login:**
-- Username: (as configured during install)
-- Password: (as configured during install)
+- 🔐 **Secure Authentication** - Bcrypt, session management, rate limiting
+- 🛡️ **Safe Code Execution** - Sandboxed Python with RestrictedPython
+- 👨‍💼 **Admin Dashboard** - Create tests, assign to students, view results
+- 🎓 **Student Portal** - Complete tests, practice coding, instant feedback
+- 📊 **Excel Reports** - Export student data and results
+- 📝 **Audit Logging** - Track all security events
+- 📈 **Monitoring** - Health checks, metrics, system monitoring
+- ⚡ **Rate Limiting** - DDoS protection
 
 ## 📋 Requirements
 
 - Linux (Ubuntu, Debian, Amazon Linux, CentOS, RHEL)
 - Python 3.7+
 - 2GB RAM minimum
-- 10GB disk space
+- Root/sudo access
 
-## 🎯 Usage
+## 🚀 Usage
+
+### After Installation
+
+The script will display:
+```
+Dashboard URL: http://YOUR_IP:8501
+Admin Username: admin
+Admin Password: [auto-generated]
+```
+
+**Save these credentials!**
+
+### Access Dashboard
+
+Open the URL in your browser and login with admin credentials.
 
 ### For Administrators
 
-1. **Login** - Use admin credentials
-2. **Create Tests** - Write buggy Python code for students to fix
-3. **Assign Tests** - Select students and assign tests
-4. **View Results** - Monitor submissions and scores
-5. **Export Reports** - Download Excel reports
+1. **Create Tests** - Write buggy Python code
+2. **Assign Tests** - Select students and assign
+3. **View Results** - Monitor submissions and scores
+4. **Export Reports** - Download Excel reports
 
 ### For Students
 
-1. **Register** - Create account with email
-2. **Login** - Access student dashboard
-3. **View Tests** - See assigned debugging challenges
-4. **Fix Code** - Debug and fix the buggy code
-5. **Submit** - Get instant feedback and scores
+1. **Register** - Create account
+2. **Login** - Access dashboard
+3. **Complete Tests** - Fix buggy code
+4. **Submit** - Get instant feedback
 
 ## 🔧 Management
 
-### Start/Stop Service
+### Service Commands
 
 ```bash
-# Start
-sudo systemctl start student-platform
+# Check status
+sudo systemctl status student-platform
 
-# Stop
+# Stop service
 sudo systemctl stop student-platform
 
-# Restart
+# Start service
+sudo systemctl start student-platform
+
+# Restart service
 sudo systemctl restart student-platform
 
-# Status
-sudo systemctl status student-platform
+# View logs
+sudo journalctl -u student-platform -f
 ```
 
-### View Logs
+### Application Logs
 
 ```bash
 # Application logs
 tail -f logs/app.log
 
-# Service logs
-sudo journalctl -u student-platform -f
-
 # Audit logs
 tail -f logs/audit.log
-```
 
-### Manual Start
-
-```bash
-source venv/bin/activate
-streamlit run app.py
-```
-
-## 🔒 Security Features
-
-- **Password Hashing** - Bcrypt encryption
-- **Session Management** - Automatic timeout
-- **Rate Limiting** - Prevent abuse
-- **Code Sandboxing** - RestrictedPython
-- **Input Validation** - Sanitized inputs
-- **Audit Logging** - Track all actions
-- **Failed Login Protection** - Account lockout
-
-## 📊 Configuration
-
-Edit `.env` file to customize:
-
-```bash
-# Database
-DATABASE_URL=sqlite:///./student_platform.db
-
-# Admin
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your_secure_password
-
-# Security
-SECRET_KEY=auto_generated
-SESSION_TIMEOUT=3600
-MAX_LOGIN_ATTEMPTS=5
-
-# Rate Limiting
-RATE_LIMIT_ENABLED=true
-MAX_REQUESTS_PER_MINUTE=60
-MAX_CODE_RUNS_PER_MINUTE=10
-
-# Logging
-LOG_LEVEL=INFO
+# Service logs
+tail -f logs/service.log
 ```
 
 ## 🌐 AWS Deployment
@@ -144,37 +116,56 @@ LOG_LEVEL=INFO
 ### EC2 Setup
 
 1. Launch EC2 instance (t2.medium or larger)
-2. Configure Security Group:
-   - Allow port 8501 (application)
-   - Allow port 22 (SSH)
+2. Configure Security Group - Allow port 8501
 3. SSH into instance
-4. Run installation script
+4. Run installation command
 
 ```bash
 ssh -i your-key.pem ec2-user@your-ec2-ip
-git clone https://github.com/JibbranAli/studnets-coding-platform.git
-cd studnets-coding-platform
-chmod +x install.sh
-./install.sh
+curl -sSL https://raw.githubusercontent.com/JibbranAli/studnets-coding-platform/main/install.sh | bash
 ```
 
-### Security Group Rules
+### Security Group
 
 | Type | Port | Source |
 |------|------|--------|
 | SSH | 22 | Your IP |
 | Custom TCP | 8501 | 0.0.0.0/0 |
 
-## 📖 Documentation
+## 🔒 Security
 
-- **[USER_GUIDE.md](USER_GUIDE.md)** - Complete guide for students and admins
-- **[QUICK_START.md](QUICK_START.md)** - Get started in 5 minutes
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Detailed deployment guide
-- **[PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)** - Pre-deployment checklist
+- **Password Hashing** - Bcrypt encryption
+- **Session Management** - Auto timeout
+- **Rate Limiting** - Prevent abuse
+- **Code Sandboxing** - RestrictedPython
+- **Input Validation** - Sanitized inputs
+- **Audit Logging** - Track all actions
+- **Account Lockout** - Failed login protection
+
+## ⚙️ Configuration
+
+Edit `.env` file to customize settings:
+
+```bash
+nano .env
+```
+
+Key settings:
+- `ADMIN_USERNAME` - Admin username
+- `ADMIN_PASSWORD` - Admin password
+- `SESSION_TIMEOUT` - Session timeout (seconds)
+- `MAX_LOGIN_ATTEMPTS` - Max failed logins
+- `RATE_LIMIT_ENABLED` - Enable rate limiting
+- `LOG_LEVEL` - Logging level (INFO, DEBUG, ERROR)
+
+After changes, restart:
+```bash
+sudo systemctl restart student-platform
+```
 
 ## 🛠️ Troubleshooting
 
-### Application won't start
+### Service won't start
 
 ```bash
 # Check logs
@@ -183,9 +174,16 @@ sudo journalctl -u student-platform -xe
 # Check if port is in use
 sudo lsof -i :8501
 
-# Restart service
+# Restart
 sudo systemctl restart student-platform
 ```
+
+### Can't access dashboard
+
+1. Check service is running: `sudo systemctl status student-platform`
+2. Check firewall allows port 8501
+3. For AWS: Check Security Group allows port 8501
+4. Check logs: `tail -f logs/app.log`
 
 ### Database errors
 
@@ -193,27 +191,6 @@ sudo systemctl restart student-platform
 # Reinitialize database
 source venv/bin/activate
 python3 -c "from database import init_db; init_db()"
-```
-
-### Permission errors
-
-```bash
-# Fix permissions
-chmod 755 data logs backups
-chown -R $USER:$USER .
-```
-
-## 🔄 Updates
-
-```bash
-# Pull latest changes
-git pull origin main
-
-# Reinstall dependencies
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Restart service
 sudo systemctl restart student-platform
 ```
 
@@ -221,68 +198,72 @@ sudo systemctl restart student-platform
 
 ```
 studnets-coding-platform/
-├── app.py                 # Main application
-├── auth.py                # Authentication
-├── code_runner.py         # Code execution engine
-├── database.py            # Database models
-├── excel_sync.py          # Excel export
-├── config.py              # Configuration
-├── logger.py              # Logging system
-├── monitoring.py          # Health checks
-├── security.py            # Security features
-├── rate_limiter.py        # Rate limiting
-├── healthcheck.py         # Health endpoint
-├── install.sh             # Installation script
-├── requirements.txt       # Python dependencies
-├── .env.example           # Environment template
-└── README.md              # This file
+├── app.py              # Main application
+├── auth.py             # Authentication
+├── code_runner.py      # Code execution
+├── database.py         # Database models
+├── config.py           # Configuration
+├── logger.py           # Logging
+├── monitoring.py       # Health checks
+├── security.py         # Security features
+├── rate_limiter.py     # Rate limiting
+├── excel_sync.py       # Excel export
+├── install.sh          # Installation script
+├── requirements.txt    # Dependencies
+└── README.md           # This file
 ```
+
+## 🔄 Updates
+
+```bash
+cd studnets-coding-platform
+git pull origin main
+source venv/bin/activate
+pip install -r requirements.txt
+sudo systemctl restart student-platform
+```
+
+## 📊 Performance
+
+- Supports 400+ concurrent users
+- SQLite for simplicity
+- Efficient code execution with timeouts
+- Rate limiting prevents overload
+- Automatic session cleanup
+- Resource monitoring
+
+## 📖 Documentation
+
+- **[USER_GUIDE.md](USER_GUIDE.md)** - Complete guide for students and admins
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
+2. Create feature branch
+3. Commit changes
+4. Push to branch
 5. Open Pull Request
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
+MIT License
 
 ## 💬 Support
 
 - **Issues:** [GitHub Issues](https://github.com/JibbranAli/studnets-coding-platform/issues)
-- **Documentation:** Check the docs folder
 - **Logs:** `tail -f logs/app.log`
 
 ## 🎓 Use Cases
 
-- **Universities** - Programming courses and assignments
-- **Coding Bootcamps** - Practice debugging skills
-- **Online Education** - Remote learning platforms
-- **Corporate Training** - Employee skill development
-
-## 📈 Performance
-
-- Supports 400+ concurrent users
-- SQLite for simplicity (PostgreSQL supported)
-- Efficient code execution with timeouts
-- Rate limiting prevents overload
-- Automatic session cleanup
-
-## 🔐 Production Ready
-
-- ✅ Security hardening
-- ✅ Error handling
-- ✅ Logging and monitoring
-- ✅ Auto-restart on failure
-- ✅ Rate limiting
-- ✅ Input validation
-- ✅ Session management
+- Universities - Programming courses
+- Coding Bootcamps - Debugging practice
+- Online Education - Remote learning
+- Corporate Training - Skill development
 
 ---
 
 **Made with ❤️ for education**
 
 **Repository:** https://github.com/JibbranAli/studnets-coding-platform
+
+**One command. Zero configuration. Production ready.** 🚀
