@@ -23,7 +23,13 @@ NC='\033[0m'
 
 print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_info() { echo -e "${BLUE}➜ $1${NC}"; }
-print_error() { echo -e "${RED}✗ $1${NC}"; exit 1; }
+print_error() { echo -e "${RED}✗ $1${NC}"; echo "Check logs/install.log for details"; exit 1; }
+
+# Create log file
+mkdir -p logs
+LOG_FILE="logs/install.log"
+exec 1> >(tee -a "$LOG_FILE")
+exec 2>&1
 
 # Detect OS
 if [ -f /etc/os-release ]; then
@@ -43,12 +49,12 @@ print_info "Installing system dependencies..."
 
 if [ "$OS" = "ubuntu" ] || [ "$OS" = "debian" ]; then
     export DEBIAN_FRONTEND=noninteractive
-    sudo apt-get update -qq > /dev/null 2>&1
-    sudo apt-get install -y python3 python3-pip python3-venv gcc python3-dev curl > /dev/null 2>&1
+    sudo apt-get update -qq
+    sudo apt-get install -y python3 python3-pip python3-venv gcc python3-dev curl
 elif [ "$OS" = "amzn" ]; then
-    sudo yum install -y python3 python3-pip gcc python3-devel curl -q > /dev/null 2>&1
+    sudo yum install -y python3 python3-pip gcc python3-devel curl -y
 elif [ "$OS" = "centos" ] || [ "$OS" = "rhel" ]; then
-    sudo yum install -y python3 python3-pip gcc python3-devel curl -q > /dev/null 2>&1
+    sudo yum install -y python3 python3-pip gcc python3-devel curl -y
 else
     print_error "Unsupported OS: $OS"
 fi
@@ -60,10 +66,10 @@ print_success "System dependencies installed"
 # ============================================
 print_info "Setting up Python environment..."
 
-python3 -m venv venv > /dev/null 2>&1
+python3 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip -q > /dev/null 2>&1
-pip install -r requirements.txt -q > /dev/null 2>&1
+pip install --upgrade pip
+pip install -r requirements.txt
 
 print_success "Python environment ready"
 
@@ -135,10 +141,7 @@ print_info "Initializing database..."
 mkdir -p data logs backups
 chmod 755 data logs backups
 
-python3 << 'PYEOF' > /dev/null 2>&1
-from database import init_db
-init_db()
-PYEOF
+python3 -c "from database import init_db; init_db()"
 
 print_success "Database initialized"
 
@@ -170,8 +173,8 @@ StandardError=append:$CURRENT_PATH/logs/service.log
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload > /dev/null 2>&1
-sudo systemctl enable student-platform.service > /dev/null 2>&1
+sudo systemctl daemon-reload
+sudo systemctl enable student-platform.service
 
 print_success "Auto-start service configured"
 
@@ -181,10 +184,10 @@ print_success "Auto-start service configured"
 print_info "Configuring firewall..."
 
 if command -v ufw > /dev/null 2>&1; then
-    sudo ufw allow 8501/tcp > /dev/null 2>&1 || true
+    sudo ufw allow 8501/tcp 2>/dev/null || true
 elif command -v firewall-cmd > /dev/null 2>&1; then
-    sudo firewall-cmd --permanent --add-port=8501/tcp > /dev/null 2>&1 || true
-    sudo firewall-cmd --reload > /dev/null 2>&1 || true
+    sudo firewall-cmd --permanent --add-port=8501/tcp 2>/dev/null || true
+    sudo firewall-cmd --reload 2>/dev/null || true
 fi
 
 print_success "Firewall configured"
@@ -195,12 +198,12 @@ print_success "Firewall configured"
 print_info "Starting application..."
 
 sudo systemctl start student-platform.service
-sleep 3
+sleep 5
 
 if sudo systemctl is-active --quiet student-platform.service; then
     print_success "Application started successfully"
 else
-    print_error "Failed to start application"
+    print_error "Failed to start application. Check: sudo journalctl -u student-platform -xe"
 fi
 
 # ============================================
@@ -242,7 +245,7 @@ echo "  Logs:    sudo journalctl -u student-platform -f"
 echo ""
 echo -e "${GREEN}Application Logs:${NC}"
 echo "  tail -f logs/app.log"
-echo "  tail -f logs/audit.log"
+echo "  tail -f logs/service.log"
 echo ""
 
 if [ "$OS" = "amzn" ]; then
@@ -253,16 +256,17 @@ fi
 
 echo "============================================"
 echo ""
-echo -e "${GREEN}Opening dashboard in 3 seconds...${NC}"
-sleep 3
-
-# Try to open browser (if available)
-if command -v xdg-open > /dev/null 2>&1; then
-    xdg-open "$DASHBOARD_URL" > /dev/null 2>&1 &
-elif command -v open > /dev/null 2>&1; then
-    open "$DASHBOARD_URL" > /dev/null 2>&1 &
-fi
-
-echo ""
 echo -e "${BLUE}Access your dashboard at: $DASHBOARD_URL${NC}"
+echo ""
+
+# Save credentials to file
+cat > CREDENTIALS.txt << EOF
+Dashboard URL: $DASHBOARD_URL
+Admin Username: $ADMIN_USER
+Admin Password: $ADMIN_PASS
+
+Installation Date: $(date)
+EOF
+
+echo -e "${GREEN}Credentials saved to: CREDENTIALS.txt${NC}"
 echo ""
